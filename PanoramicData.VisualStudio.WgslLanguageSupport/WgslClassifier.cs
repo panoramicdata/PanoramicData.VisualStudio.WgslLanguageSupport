@@ -1,3 +1,4 @@
+#nullable enable
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
 using System;
@@ -9,14 +10,30 @@ namespace PanoramicData.VisualStudio.WgslLanguageSupport;
 /// <summary>
 /// Classifies WGSL code for syntax highlighting.
 /// </summary>
-internal class WgslClassifier(IClassificationTypeRegistryService registry) : IClassifier
+internal class WgslClassifier : IClassifier
 {
-	private readonly IClassificationType _keywordType = registry.GetClassificationType("wgsl.keyword");
-	private readonly IClassificationType _typeType = registry.GetClassificationType("wgsl.type");
-	private readonly IClassificationType _attributeType = registry.GetClassificationType("wgsl.attribute");
-	private readonly IClassificationType _commentType = registry.GetClassificationType("wgsl.comment");
-	private readonly IClassificationType _numberType = registry.GetClassificationType("wgsl.number");
-	private readonly IClassificationType _functionType = registry.GetClassificationType("wgsl.function");
+	private readonly IClassificationType? _keywordType;
+	private readonly IClassificationType? _typeType;
+	private readonly IClassificationType? _attributeType;
+	private readonly IClassificationType? _commentType;
+	private readonly IClassificationType? _numberType;
+	private readonly IClassificationType? _functionType;
+
+	public WgslClassifier(IClassificationTypeRegistryService registry)
+	{
+		if (registry == null)
+		{
+			throw new ArgumentNullException(nameof(registry));
+		}
+
+		// Get classification types - these may be null if not yet registered
+		_keywordType = registry.GetClassificationType("wgsl.keyword");
+		_typeType = registry.GetClassificationType("wgsl.type");
+		_attributeType = registry.GetClassificationType("wgsl.attribute");
+		_commentType = registry.GetClassificationType("wgsl.comment");
+		_numberType = registry.GetClassificationType("wgsl.number");
+		_functionType = registry.GetClassificationType("wgsl.function");
+	}
 
 	// WGSL Keywords
 	private static readonly HashSet<string> Keywords =
@@ -83,6 +100,8 @@ internal class WgslClassifier(IClassificationTypeRegistryService registry) : ICl
 
 	private void ClassifyComments(string text, int startPosition, ITextSnapshot snapshot, List<ClassificationSpan> classifications)
 	{
+		if (_commentType == null) return;
+
 		// Line comments: //
 		var lineCommentPattern = @"//[^\r\n]*";
 		foreach (Match match in Regex.Matches(text, lineCommentPattern))
@@ -102,6 +121,8 @@ internal class WgslClassifier(IClassificationTypeRegistryService registry) : ICl
 
 	private void ClassifyAttributes(string text, int startPosition, ITextSnapshot snapshot, List<ClassificationSpan> classifications)
 	{
+		if (_attributeType == null) return;
+
 		// Match @attribute or @attribute(...)
 		var attributePattern = @"@\w+(?:\([^)]*\))?";
 		foreach (Match match in Regex.Matches(text, attributePattern))
@@ -117,6 +138,8 @@ internal class WgslClassifier(IClassificationTypeRegistryService registry) : ICl
 
 	private void ClassifyNumbers(string text, int startPosition, ITextSnapshot snapshot, List<ClassificationSpan> classifications)
 	{
+		if (_numberType == null) return;
+
 		// Match numbers: integers, floats, hex
 		var numberPattern = @"\b(?:0x[0-9a-fA-F]+[iu]?|(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?[fh]?)\b";
 		foreach (Match match in Regex.Matches(text, numberPattern))
@@ -131,6 +154,8 @@ internal class WgslClassifier(IClassificationTypeRegistryService registry) : ICl
 
 	private void ClassifyFunctions(string text, int startPosition, ITextSnapshot snapshot, List<ClassificationSpan> classifications)
 	{
+		if (_functionType == null) return;
+
 		// Match function calls: identifier(
 		var functionPattern = @"\b([a-zA-Z_]\w*)\s*\(";
 		foreach (Match match in Regex.Matches(text, functionPattern))
@@ -158,12 +183,12 @@ internal class WgslClassifier(IClassificationTypeRegistryService registry) : ICl
 
 			var word = match.Value;
 
-			if (Keywords.Contains(word))
+			if (Keywords.Contains(word) && _keywordType != null)
 			{
 				var span = new SnapshotSpan(snapshot, startPosition + match.Index, match.Length);
 				classifications.Add(new ClassificationSpan(span, _keywordType));
 			}
-			else if (Types.Contains(word))
+			else if (Types.Contains(word) && _typeType != null)
 			{
 				var span = new SnapshotSpan(snapshot, startPosition + match.Index, match.Length);
 				classifications.Add(new ClassificationSpan(span, _typeType));

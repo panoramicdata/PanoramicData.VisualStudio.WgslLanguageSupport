@@ -1,3 +1,4 @@
+#nullable enable
 using System.ComponentModel.Composition;
 using System.Windows.Media;
 using Microsoft.VisualStudio.Text.Classification;
@@ -44,7 +45,7 @@ internal static class WgslClassificationDefinitions
 	[ClassificationType(ClassificationTypeNames = "wgsl.keyword")]
 	[Name("wgsl.keyword.format")]
 	[UserVisible(true)]
-	[Order(Before = Priority.Default)]
+	[Order(Before = "Default")]
 	internal sealed class WgslKeywordFormat : ClassificationFormatDefinition
 	{
 		public WgslKeywordFormat()
@@ -59,7 +60,7 @@ internal static class WgslClassificationDefinitions
 	[ClassificationType(ClassificationTypeNames = "wgsl.type")]
 	[Name("wgsl.type.format")]
 	[UserVisible(true)]
-	[Order(Before = Priority.Default)]
+	[Order(Before = "Default")]
 	internal sealed class WgslTypeFormat : ClassificationFormatDefinition
 	{
 		public WgslTypeFormat()
@@ -73,7 +74,7 @@ internal static class WgslClassificationDefinitions
 	[ClassificationType(ClassificationTypeNames = "wgsl.attribute")]
 	[Name("wgsl.attribute.format")]
 	[UserVisible(true)]
-	[Order(Before = Priority.Default)]
+	[Order(Before = "Default")]
 	internal sealed class WgslAttributeFormat : ClassificationFormatDefinition
 	{
 		public WgslAttributeFormat()
@@ -87,7 +88,7 @@ internal static class WgslClassificationDefinitions
 	[ClassificationType(ClassificationTypeNames = "wgsl.comment")]
 	[Name("wgsl.comment.format")]
 	[UserVisible(true)]
-	[Order(Before = Priority.Default)]
+	[Order(Before = "Default")]
 	internal sealed class WgslCommentFormat : ClassificationFormatDefinition
 	{
 		public WgslCommentFormat()
@@ -101,7 +102,7 @@ internal static class WgslClassificationDefinitions
 	[ClassificationType(ClassificationTypeNames = "wgsl.number")]
 	[Name("wgsl.number.format")]
 	[UserVisible(true)]
-	[Order(Before = Priority.Default)]
+	[Order(Before = "Default")]
 	internal sealed class WgslNumberFormat : ClassificationFormatDefinition
 	{
 		public WgslNumberFormat()
@@ -115,7 +116,7 @@ internal static class WgslClassificationDefinitions
 	[ClassificationType(ClassificationTypeNames = "wgsl.function")]
 	[Name("wgsl.function.format")]
 	[UserVisible(true)]
-	[Order(Before = Priority.Default)]
+	[Order(Before = "Default")]
 	internal sealed class WgslFunctionFormat : ClassificationFormatDefinition
 	{
 		public WgslFunctionFormat()

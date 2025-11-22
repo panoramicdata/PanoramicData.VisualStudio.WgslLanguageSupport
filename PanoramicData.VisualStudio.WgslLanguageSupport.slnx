@@ -7,11 +7,13 @@
     <File Path="MASTER_PLAN.md" />
     <File Path="README.md" />
     <File Path="PanoramicData.VisualStudio.WgslLanguageSupport\Grammars\wgsl.tmLanguage.json" />
+    <File Path="ResetExtension.bat" />
     <File Path="version.json" />
   </Folder>
   <Folder Name="/Samples/">
+    <File Path="Samples/linting-test.wgsl" />
     <File Path="Samples\example.wgsl" />
   </Folder>
-  <Project Path="PanoramicData.VisualStudio.WgslLanguageSupport\PanoramicData.VisualStudio.WgslLanguageSupport.csproj" Id="f02ebef0-b109-4999-add3-f2009e3ac0a7" />
   <Project Path="PanoramicData.VisualStudio.WgslLanguageSupport.Tests\PanoramicData.VisualStudio.WgslLanguageSupport.Tests.csproj" />
+  <Project Path="PanoramicData.VisualStudio.WgslLanguageSupport\PanoramicData.VisualStudio.WgslLanguageSupport.csproj" Id="f02ebef0-b109-4999-add3-f2009e3ac0a7" />
 </Solution>

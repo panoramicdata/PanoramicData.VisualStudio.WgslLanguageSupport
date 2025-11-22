@@ -1,3 +1,4 @@
+#nullable enable
 using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Utilities;
 
