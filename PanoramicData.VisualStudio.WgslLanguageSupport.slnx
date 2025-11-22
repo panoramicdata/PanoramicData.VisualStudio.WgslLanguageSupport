@@ -3,13 +3,9 @@
     <File Path=".editorconfig" />
     <File Path=".gitignore" />
     <File Path="CHANGELOG.md" />
-    <File Path="IMPLEMENTATION_SUMMARY.md" />
     <File Path="LICENSE" />
     <File Path="MASTER_PLAN.md" />
-    <File Path="NEXT_STEPS.md" />
-    <File Path="PROJECT_STATUS.md" />
     <File Path="README.md" />
-    <File Path="TESTING_GUIDE.md" />
     <File Path="PanoramicData.VisualStudio.WgslLanguageSupport\Grammars\wgsl.tmLanguage.json" />
     <File Path="version.json" />
   </Folder>
