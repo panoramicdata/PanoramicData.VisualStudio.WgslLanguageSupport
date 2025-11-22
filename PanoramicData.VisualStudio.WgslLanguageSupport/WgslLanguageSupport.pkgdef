@@ -1,0 +1,16 @@
+[$RootKey$\Languages\File Extensions\.wgsl]
+@="wgsl"
+
+[$RootKey$\Languages\Language Services\wgsl]
+@="WGSL Language Service"
+
+[$RootKey$\TextMate\Repositories]
+"WGSL"="$PackageFolder$\Grammars"
+
+[$RootKey$\TextMate\Repositories\WGSL]
+"Key"="source.wgsl"
+"Priority"=dword:00000064
+"GrammarFileName"="wgsl.tmLanguage.json"
+
+[$RootKey$\ShellFileAssociations\.wgsl]
+@="wgsl"

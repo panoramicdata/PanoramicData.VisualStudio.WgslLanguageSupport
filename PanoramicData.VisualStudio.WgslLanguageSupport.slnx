@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="CHANGELOG.md" />
+    <File Path="IMPLEMENTATION_SUMMARY.md" />
+    <File Path="LICENSE" />
+    <File Path="MASTER_PLAN.md" />
+    <File Path="NEXT_STEPS.md" />
+    <File Path="PROJECT_STATUS.md" />
+    <File Path="README.md" />
+    <File Path="TESTING_GUIDE.md" />
+    <File Path="PanoramicData.VisualStudio.WgslLanguageSupport\Grammars\wgsl.tmLanguage.json" />
+    <File Path="version.json" />
+  </Folder>
+  <Folder Name="/Samples/">
+    <File Path="Samples\example.wgsl" />
+  </Folder>
+  <Project Path="PanoramicData.VisualStudio.WgslLanguageSupport\PanoramicData.VisualStudio.WgslLanguageSupport.csproj" Id="f02ebef0-b109-4999-add3-f2009e3ac0a7" />
+  <Project Path="PanoramicData.VisualStudio.WgslLanguageSupport.Tests\PanoramicData.VisualStudio.WgslLanguageSupport.Tests.csproj" />
+</Solution>
