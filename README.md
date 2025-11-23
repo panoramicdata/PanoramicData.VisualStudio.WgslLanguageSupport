@@ -6,8 +6,8 @@ A Visual Studio 2022 extension that provides comprehensive language support for 
 
 ## Features
 
-- ?? **Syntax Highlighting** - Comprehensive WGSL syntax coloring via TextMate grammar
-- ?? **Real-Time Linting** - Comprehensive error detection with 8 validation categories:
+- **Syntax Highlighting** - Comprehensive WGSL syntax coloring
+- **Real-Time Linting** - Comprehensive error detection with 8 validation categories:
   - Missing semicolons
   - Unmatched braces (`{}`, `()`, `[]`)
   - Invalid attributes (`@vertex`, `@fragment`, `@compute`, etc.)
@@ -16,10 +16,10 @@ A Visual Studio 2022 extension that provides comprehensive language support for 
   - Duplicate binding detection
   - Workgroup size validation
   - Variable declaration validation
-- ?? **File Association** - Automatic recognition of `.wgsl` files
-- ? **Fast & Lightweight** - In-process extension with minimal overhead
-- ?? **Comment-Aware** - Skips validation inside comments and strings
-- ?? **Complete Type Coverage** - Recognizes all WGSL scalar, vector, matrix, texture, and sampler types
+- **File Association** - Automatic recognition of `.wgsl` files
+- **Fast & Lightweight** - In-process extension with minimal overhead
+- **Comment-Aware** - Skips validation inside comments and strings
+- **Complete Type Coverage** - Recognizes all WGSL scalar, vector, matrix, texture, and sampler types
 
 ## Installation
 
@@ -28,7 +28,7 @@ A Visual Studio 2022 extension that provides comprehensive language support for 
 Once published, you'll be able to install directly:
 
 1. Open Visual Studio 2022
-2. Go to **Extensions ? Manage Extensions**
+2. Go to **Extensions > Manage Extensions**
 3. Search for **"WGSL Language Support"**
 4. Click **Download** and restart Visual Studio
 
