@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
 	<Metadata>
-		<Identity Id="PanoramicData.VisualStudio.WgslLanguageSupport.ad1d7d39-de8b-49b5-ba08-acd06597d11e" Version="1.0" Language="en-US" Publisher="Panoramic Data Limited" />
+		<Identity Id="PanoramicData.VisualStudio.WgslLanguageSupport.ad1d7d39-de8b-49b5-ba08-acd06597d11e" Version="|%CurrentProject%;GetBuildVersion|" Language="en-US" Publisher="Panoramic Data Limited" />
 		<DisplayName>WGSL Language Support</DisplayName>
 		<Description xml:space="preserve">WebGPU Shading Language (WGSL) support for Visual Studio with syntax highlighting and linting.</Description>
 		<License>LICENSE.txt</License>

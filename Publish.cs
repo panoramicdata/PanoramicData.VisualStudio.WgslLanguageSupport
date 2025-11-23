@@ -20,13 +20,17 @@ using System.Threading.Tasks;
 //
 // Prerequisites:
 // - Visual Studio 2022 with VSIX development workload
-// - Personal Access Token (PAT) for Visual Studio Marketplace
+// - Nerdbank.GitVersioning (nbgv) CLI tool (optional, for automatic versioning)
+// - Personal Access Token (PAT) for Visual Studio Marketplace (for --upload)
 //
 // Usage:
 //   dotnet run Publish.cs [version] [--upload] [--skip-tests]
 //
 // Arguments:
-//   version     - Version number (e.g., 1.0.0). Optional, reads from manifest if not provided.
+//   version     - Version number (e.g., 1.0.0). Optional:
+//                 - If not provided, gets version from NBGV (recommended)
+//                 - Falls back to reading from manifest if NBGV not installed
+//                 - Can be specified to override NBGV version
 //   --upload    - Upload to Visual Studio Marketplace (requires PAT in environment)
 //   --skip-tests - Skip running unit tests before publishing
 //
@@ -34,9 +38,16 @@ using System.Threading.Tasks;
 //   VSIX_PAT    - Personal Access Token for VS Marketplace (required for --upload)
 //
 // Examples:
-//   dotnet run Publish.cs                    # Build only, version from manifest
-//   dotnet run Publish.cs 1.0.1              # Build with new version
-//   dotnet run Publish.cs 1.0.1 --upload     # Build and upload to marketplace
+//   dotnet run Publish.cs                    # Build with NBGV version
+//   dotnet run Publish.cs --upload           # Build and publish with NBGV version
+//   dotnet run Publish.cs 1.0.5              # Build with specific version
+//   dotnet run Publish.cs 1.0.5 --upload     # Build and publish with specific version
+//   dotnet run Publish.cs --skip-tests       # Skip tests (dev only)
+//
+// NBGV Integration:
+//   If nbgv is installed, automatically gets version from version.json
+//   Version format: major.minor.build (e.g., 1.0.123)
+//   NBGV calculates build number from git commit height
 // ============================================================================
 
 const string SolutionFile = "PanoramicData.VisualStudio.WgslLanguageSupport.slnx";
@@ -154,21 +165,49 @@ void ValidateEnvironment()
 
 async Task<string> GetVersionAsync(string? providedVersion)
 {
+    // If version provided manually, use it (for override scenarios)
     if (!string.IsNullOrEmpty(providedVersion))
     {
         // Validate version format
-        if (!System.Text.RegularExpressions.Regex.IsMatch(providedVersion, @"^\d+\.\d+(\.\d+)?$"))
-            throw new Exception($"Invalid version format: {providedVersion}. Use format: 1.0 or 1.0.0");
+        if (!System.Text.RegularExpressions.Regex.IsMatch(providedVersion, @"^\d+\.\d+\.\d+$"))
+            throw new Exception($"Invalid version format: {providedVersion}. Use format: 1.0.0");
         return providedVersion;
     }
     
-    // Read version from manifest
-    var manifest = await File.ReadAllTextAsync(ManifestFile);
-    var match = System.Text.RegularExpressions.Regex.Match(manifest, @"Version=""([^""]+)""");
-    if (!match.Success)
-        throw new Exception("Could not read version from manifest");
+    // Check if nbgv is available
+    if (!IsCommandAvailable("nbgv"))
+    {
+        Console.WriteLine("   [!] NBGV not found, reading from manifest...");
+        // Fallback: Read version from manifest
+        var manifest = await File.ReadAllTextAsync(ManifestFile);
+        var match = System.Text.RegularExpressions.Regex.Match(manifest, @"Version=""([^""]+)""");
+        if (!match.Success)
+            throw new Exception("Could not read version from manifest");
+        return match.Groups[1].Value;
+    }
     
-    return match.Groups[1].Value;
+    // Get version from NBGV (same logic as TagAndPush.cs)
+    var result = await RunCommandAsync("nbgv", "get-version -f json", captureOutput: true);
+    
+    // Try to get SemVer2 version first (includes build metadata like 1.0.123)
+    var semVer2Match = System.Text.RegularExpressions.Regex.Match(result.Output, @"""SemVer2""\s*:\s*""([^""]+)""");
+    if (semVer2Match.Success)
+    {
+        var semVer2 = semVer2Match.Groups[1].Value;
+        Console.WriteLine($"   SemVer2: {semVer2}");
+        
+        // Extract just the version part (remove any +metadata suffix if present)
+        var versionMatch = System.Text.RegularExpressions.Regex.Match(semVer2, @"^([0-9]+\.[0-9]+\.[0-9]+)");
+        if (versionMatch.Success)
+            return versionMatch.Groups[1].Value;
+    }
+    
+    // Fallback to Version field
+    var versionMatch2 = System.Text.RegularExpressions.Regex.Match(result.Output, @"""Version""\s*:\s*""([^""]+)""");
+    if (!versionMatch2.Success)
+        throw new Exception("Could not parse version from NBGV");
+    
+    return versionMatch2.Groups[1].Value;
 }
 
 async Task UpdateManifestVersionAsync(string newVersion)
@@ -368,7 +407,36 @@ string? FindVsixPublisher()
     return null;
 }
 
+bool IsCommandAvailable(string command)
+{
+    try
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = command,
+            Arguments = "--version",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        
+        using var process = Process.Start(startInfo);
+        process?.WaitForExit(5000);
+        return process?.ExitCode == 0;
+    }
+    catch
+    {
+        return false;
+    }
+}
+
 async Task<int> RunCommandAsync(string fileName, string arguments)
+{
+    return (await RunCommandAsync(fileName, arguments, captureOutput: false)).ExitCode;
+}
+
+async Task<(int ExitCode, string Output)> RunCommandAsync(string fileName, string arguments, bool captureOutput)
 {
     var startInfo = new ProcessStartInfo
     {
@@ -392,12 +460,19 @@ async Task<int> RunCommandAsync(string fileName, string arguments)
     var output = await outputTask;
     var error = await errorTask;
     
-    if (!string.IsNullOrWhiteSpace(output))
-        Console.WriteLine(output);
-    
-    if (!string.IsNullOrWhiteSpace(error) && process.ExitCode != 0)
-        Console.Error.WriteLine(error);
-    
-    return process.ExitCode;
+    if (captureOutput)
+    {
+        return (process.ExitCode, output);
+    }
+    else
+    {
+        if (!string.IsNullOrWhiteSpace(output))
+            Console.WriteLine(output);
+        
+        if (!string.IsNullOrWhiteSpace(error) && process.ExitCode != 0)
+            Console.Error.WriteLine(error);
+        
+        return (process.ExitCode, output);
+    }
 }
 

@@ -61,6 +61,21 @@ When implementing new features or fixing bugs:
 - **VS SDK**: Traditional VSIX SDK (in-process MEF)
 - **NOT** using the new VisualStudio.Extensibility SDK (out-of-process)
 
+### Automation & Scripting
+
+- **PREFER C# single-file scripts** (`.cs` files) over PowerShell for automation
+- Use `dotnet run Script.cs` pattern (see `Publish.cs`, `TagAndPush.cs`, `Coverage.cs`)
+- C# scripts are:
+  - Cross-platform (Windows/Linux/macOS)
+  - Type-safe
+  - Easy to debug
+  - Consistent with project technology stack
+- Only use PowerShell/batch files for simple, Windows-specific tasks
+- Existing C# scripts in project:
+  - `Publish.cs` - Build and publish VSIX
+  - `TagAndPush.cs` - Create and push git tags with NBGV
+  - `Coverage.cs` - Generate code coverage reports
+
 ### Common Issues
 
 1. **Always target .NET Framework 4.8**, not .NET 8
