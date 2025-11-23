@@ -107,10 +107,26 @@ async Task CheckGitStatusAsync()
 async Task<string> GetNbgvVersionAsync()
 {
     var result = await RunCommandAsync("nbgv", "get-version -f json", captureOutput: true);
-    var match = Regex.Match(result.Output, @"""Version""\s*:\s*""([^""]+)""");
-    if (!match.Success)
+    
+    // Try to get SemVer2 version first (includes build metadata like 1.0.123)
+    var semVer2Match = Regex.Match(result.Output, @"""SemVer2""\s*:\s*""([^""]+)""");
+    if (semVer2Match.Success)
+    {
+        var semVer2 = semVer2Match.Groups[1].Value;
+        Console.WriteLine($"   SemVer2: {semVer2}");
+        
+        // Extract just the version part (remove any +metadata suffix if present)
+        var versionMatch = Regex.Match(semVer2, @"^([0-9]+\.[0-9]+\.[0-9]+)");
+        if (versionMatch.Success)
+            return versionMatch.Groups[1].Value;
+    }
+    
+    // Fallback to Version field
+    var versionMatch2 = Regex.Match(result.Output, @"""Version""\s*:\s*""([^""]+)""");
+    if (!versionMatch2.Success)
         throw new Exception("Could not parse version from NBGV");
-    return match.Groups[1].Value;
+    
+    return versionMatch2.Groups[1].Value;
 }
 
 async Task<bool> CheckTagExistsAsync(string version)
