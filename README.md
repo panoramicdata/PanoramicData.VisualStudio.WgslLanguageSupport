@@ -58,13 +58,14 @@ Once published, you'll be able to install directly:
 
 ```
 PanoramicData.VisualStudio.WgslLanguageSupport/
-??? Grammars/
-?   ??? wgsl.tmLanguage.json          # TextMate syntax grammar
-??? WgslContentDefinition.cs          # Content type registration
-??? WgslErrorTagger.cs                # Linting logic
-??? WgslErrorTaggerProvider.cs        # Tagger provider
-??? WgslLanguagePackage.cs            # VS Package registration
-??? source.extension.vsixmanifest     # Extension manifest
++-- WgslContentDefinition.cs          # Content type registration
++-- WgslClassificationDefinitions.cs  # Syntax highlighting colors
++-- WgslClassifier.cs                 # Syntax classification logic
++-- WgslClassifierProvider.cs         # Classifier provider
++-- WgslErrorTagger.cs                # Linting logic
++-- WgslErrorTaggerProvider.cs        # Tagger provider
++-- WgslLanguagePackage.cs            # VS Package registration
++-- source.extension.vsixmanifest     # Extension manifest
 ```
 
 ### Building
