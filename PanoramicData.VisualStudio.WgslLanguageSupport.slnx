@@ -5,6 +5,8 @@
     <File Path="CHANGELOG.md" />
     <File Path="LICENSE" />
     <File Path="MASTER_PLAN.md" />
+    <File Path="Publish.cs" />
+    <File Path="publish.ps1" />
     <File Path="README.md" />
     <File Path="nuget-key.txt" />
     <File Path="PanoramicData.VisualStudio.WgslLanguageSupport\Grammars\wgsl.tmLanguage.json" />
