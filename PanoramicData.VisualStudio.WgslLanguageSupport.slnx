@@ -6,6 +6,7 @@
     <File Path="LICENSE" />
     <File Path="MASTER_PLAN.md" />
     <File Path="README.md" />
+    <File Path="nuget-key.txt" />
     <File Path="PanoramicData.VisualStudio.WgslLanguageSupport\Grammars\wgsl.tmLanguage.json" />
     <File Path="ResetExtension.bat" />
     <File Path="version.json" />
