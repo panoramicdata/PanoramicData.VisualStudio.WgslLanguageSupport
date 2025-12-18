@@ -21,7 +21,7 @@ Write-Host "Git working directory is clean." -ForegroundColor Green
 # Step 2: Determine the Nerdbank git version
 Write-Host "Determining version..." -ForegroundColor Yellow
 try {
-    $versionInfo = & dotnet nbgv get-version --format json | ConvertFrom-Json
+    $versionInfo = & nbgv get-version --format json | ConvertFrom-Json
     $version = $versionInfo.Version
     Write-Host "Version: $version" -ForegroundColor Green
 } catch {
