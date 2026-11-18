@@ -89,35 +89,51 @@ internal class WgslErrorTagger : ITagger<IErrorTag>
 	{
 		// 1. Check for missing semicolons after statements
 		foreach (var error in CheckMissingSemicolons(text, snapshot))
+		{
 			yield return error;
+		}
 
 		// 2. Check for unmatched braces
 		foreach (var error in CheckUnmatchedBraces(text, snapshot))
+		{
 			yield return error;
+		}
 
 		// 3. Check for invalid attribute usage
 		foreach (var error in CheckInvalidAttributes(text, snapshot))
+		{
 			yield return error;
+		}
 
 		// 4. Check for invalid stage functions
 		foreach (var error in CheckStageFunctions(text, snapshot))
+		{
 			yield return error;
+		}
 
 		// 5. Check for undefined types
 		foreach (var error in CheckUndefinedTypes(text, snapshot))
+		{
 			yield return error;
+		}
 
 		// 6. Check for duplicate binding/group attributes
 		foreach (var error in CheckDuplicateBindings(text, snapshot))
+		{
 			yield return error;
+		}
 
 		// 7. Check for invalid workgroup_size
 		foreach (var error in CheckWorkgroupSize(text, snapshot))
+		{
 			yield return error;
+		}
 
 		// 8. Check for invalid variable declarations
 		foreach (var error in CheckVariableDeclarations(text, snapshot))
+		{
 			yield return error;
+		}
 	}
 
 	private IEnumerable<ITagSpan<IErrorTag>> CheckMissingSemicolons(string text, ITextSnapshot snapshot)
@@ -139,18 +155,24 @@ internal class WgslErrorTagger : ITagger<IErrorTag>
 			{
 				// Skip if inside a comment
 				if (IsInsideComment(text, match.Index))
+				{
 					continue;
+				}
 
 				// Skip if inside a struct definition (struct members use commas, not semicolons)
 				if (IsInsideStruct(text, match.Index))
+				{
 					continue;
+				}
 
 				// Find the end of this statement
 				var searchPos = match.Index + match.Length;
 
 				// Skip whitespace after keyword
 				while (searchPos < text.Length && char.IsWhiteSpace(text[searchPos]) && text[searchPos] != '\n')
+				{
 					searchPos++;
+				}
 
 				// Find where the statement ends (semicolon, newline, closing brace, opening brace, or EOF)
 				var foundSemicolon = false;
@@ -205,7 +227,9 @@ internal class WgslErrorTagger : ITagger<IErrorTag>
 							// Position error at the last non-whitespace character
 							var errorPos = statementEnd - 1;
 							while (errorPos > searchPos && errorPos < text.Length && char.IsWhiteSpace(text[errorPos]))
+							{
 								errorPos--;
+							}
 
 							// Safely create span with bounds checking
 							var span = TryCreateSpan(snapshot, errorPos, 1);
@@ -259,11 +283,15 @@ internal class WgslErrorTagger : ITagger<IErrorTag>
 				}
 
 				if (ch == '\n')
+				{
 					inLineComment = false;
+				}
 			}
 
 			if (commentDepth > 0 || inLineComment)
+			{
 				continue;
+			}
 
 			// Handle strings
 			if (ch == '"')
@@ -273,7 +301,9 @@ internal class WgslErrorTagger : ITagger<IErrorTag>
 			}
 
 			if (inString)
+			{
 				continue;
+			}
 
 			// Check braces
 			if (ch == '{' || ch == '(' || ch == '[')
@@ -447,7 +477,9 @@ internal class WgslErrorTagger : ITagger<IErrorTag>
 		foreach (Match match in structMatches)
 		{
 			if (!IsInsideComment(text, match.Index))
+			{
 				userDefinedTypes.Add(match.Groups[1].Value);
+			}
 		}
 
 		// Check type usage in variable declarations
@@ -583,14 +615,20 @@ internal class WgslErrorTagger : ITagger<IErrorTag>
 	{
 		// Validate snapshot
 		if (snapshot == null)
+		{
 			return null;
+		}
 
 		// Validate all bounds
 		if (start < 0 || start >= snapshot.Length)
+		{
 			return null;
+		}
 
 		if (length < 1 || start + length > snapshot.Length)
+		{
 			return null;
+		}
 
 		return new SnapshotSpan(snapshot, start, length);
 	}
@@ -603,7 +641,9 @@ internal class WgslErrorTagger : ITagger<IErrorTag>
 
 		// Check line comment
 		if (lastLineComment > lastNewLine)
+		{
 			return true;
+		}
 
 		// Check block comment
 		var blockCommentStarts = Regex.Matches(beforeText, @"/\*").Count;
@@ -620,7 +660,9 @@ internal class WgslErrorTagger : ITagger<IErrorTag>
 		// Find the last struct keyword before our position
 		var lastStructMatch = Regex.Matches(beforeText, @"\bstruct\b").Cast<Match>().LastOrDefault();
 		if (lastStructMatch == null)
+		{
 			return false;
+		}
 
 		// Count braces between the struct keyword and our position
 		var textBetween = beforeText.Substring(lastStructMatch.Index);
@@ -655,7 +697,9 @@ internal class WgslErrorTagger : ITagger<IErrorTag>
 			{
 				depth--;
 				if (foundFirst && depth == 0)
+				{
 					return i;
+				}
 			}
 		}
 
