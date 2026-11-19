@@ -148,15 +148,21 @@ async Task PublishExtensionAsync()
 void ValidateEnvironment()
 {
     if (!File.Exists(SolutionFile))
+    {
         throw new Exception($"Solution file not found: {SolutionFile}");
+    }
     
     if (!File.Exists(ManifestFile))
+    {
         throw new Exception($"Manifest file not found: {ManifestFile}");
+    }
     
     // Check for MSBuild
     var msbuildPath = FindMSBuild();
     if (string.IsNullOrEmpty(msbuildPath))
+    {
         throw new Exception("MSBuild not found. Install Visual Studio 2022 with VSIX development workload.");
+    }
     
     Console.WriteLine($"   ? MSBuild: {msbuildPath}");
     Console.WriteLine($"   ? Solution: {SolutionFile}");
@@ -170,7 +176,9 @@ async Task<string> GetVersionAsync(string? providedVersion)
     {
         // Validate version format
         if (!System.Text.RegularExpressions.Regex.IsMatch(providedVersion, @"^\d+\.\d+\.\d+$"))
+        {
             throw new Exception($"Invalid version format: {providedVersion}. Use format: 1.0.0");
+        }
         return providedVersion;
     }
     
@@ -182,7 +190,9 @@ async Task<string> GetVersionAsync(string? providedVersion)
         var manifest = await File.ReadAllTextAsync(ManifestFile);
         var match = System.Text.RegularExpressions.Regex.Match(manifest, @"Version=""([^""]+)""");
         if (!match.Success)
+        {
             throw new Exception("Could not read version from manifest");
+        }
         return match.Groups[1].Value;
     }
     
@@ -199,13 +209,17 @@ async Task<string> GetVersionAsync(string? providedVersion)
         // Extract just the version part (remove any +metadata suffix if present)
         var versionMatch = System.Text.RegularExpressions.Regex.Match(semVer2, @"^([0-9]+\.[0-9]+\.[0-9]+)");
         if (versionMatch.Success)
+        {
             return versionMatch.Groups[1].Value;
+        }
     }
     
     // Fallback to Version field
     var versionMatch2 = System.Text.RegularExpressions.Regex.Match(result.Output, @"""Version""\s*:\s*""([^""]+)""");
     if (!versionMatch2.Success)
+    {
         throw new Exception("Could not parse version from NBGV");
+    }
     
     return versionMatch2.Groups[1].Value;
 }
@@ -226,7 +240,9 @@ async Task RunTestsAsync()
 {
     var result = await RunCommandAsync("dotnet", "test --configuration Release --logger \"console;verbosity=minimal\"");
     if (result != 0)
+    {
         throw new Exception("Unit tests failed. Fix tests before publishing.");
+    }
     
     Console.WriteLine("   ? All tests passed (53/53)");
 }
@@ -250,10 +266,14 @@ string FindVsixFile()
     var vsixFiles = Directory.GetFiles(searchPath, "*.vsix", SearchOption.AllDirectories);
     
     if (vsixFiles.Length == 0)
+    {
         throw new Exception($"No VSIX file found in {searchPath}");
+    }
     
     if (vsixFiles.Length > 1)
+    {
         Console.WriteLine($"   ??  Multiple VSIX files found, using: {vsixFiles[0]}");
+    }
     
     return vsixFiles[0];
 }
@@ -382,7 +402,9 @@ string FindMSBuild()
         {
             var path = $@"C:\Program Files\Microsoft Visual Studio\{version.Split('.')[0]}\{edition}\MSBuild\Current\Bin\MSBuild.exe";
             if (File.Exists(path))
+            {
                 return path;
+            }
         }
     }
     
@@ -450,7 +472,9 @@ async Task<(int ExitCode, string Output)> RunCommandAsync(string fileName, strin
     
     using var process = Process.Start(startInfo);
     if (process == null)
+    {
         throw new Exception($"Failed to start process: {fileName}");
+    }
     
     var outputTask = process.StandardOutput.ReadToEndAsync();
     var errorTask = process.StandardError.ReadToEndAsync();
@@ -467,10 +491,14 @@ async Task<(int ExitCode, string Output)> RunCommandAsync(string fileName, strin
     else
     {
         if (!string.IsNullOrWhiteSpace(output))
+        {
             Console.WriteLine(output);
+        }
         
         if (!string.IsNullOrWhiteSpace(error) && process.ExitCode != 0)
+        {
             Console.Error.WriteLine(error);
+        }
         
         return (process.ExitCode, output);
     }

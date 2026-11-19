@@ -70,11 +70,17 @@ async Task TagAndPushAsync()
 void ValidateEnvironment()
 {
     if (!IsCommandAvailable("git"))
+    {
         throw new Exception("Git not found");
+    }
     if (!IsCommandAvailable("nbgv"))
+    {
         throw new Exception("nbgv not found. Install: dotnet tool install -g nbgv");
+    }
     if (!File.Exists("version.json"))
+    {
         throw new Exception("version.json not found");
+    }
     Console.WriteLine("   [OK] Environment validated");
 }
 
@@ -118,13 +124,17 @@ async Task<string> GetNbgvVersionAsync()
         // Extract just the version part (remove any +metadata suffix if present)
         var versionMatch = Regex.Match(semVer2, @"^([0-9]+\.[0-9]+\.[0-9]+)");
         if (versionMatch.Success)
+        {
             return versionMatch.Groups[1].Value;
+        }
     }
     
     // Fallback to Version field
     var versionMatch2 = Regex.Match(result.Output, @"""Version""\s*:\s*""([^""]+)""");
     if (!versionMatch2.Success)
+    {
         throw new Exception("Could not parse version from NBGV");
+    }
     
     return versionMatch2.Groups[1].Value;
 }
@@ -198,9 +208,13 @@ async Task<(int ExitCode, string Output)> RunCommandAsync(string fileName, strin
     await p.WaitForExitAsync();
     
     if (!captureOutput && !string.IsNullOrWhiteSpace(output))
+    {
         Console.WriteLine(output);
+    }
     if (p.ExitCode != 0 && !string.IsNullOrWhiteSpace(error))
+    {
         Console.Error.WriteLine(error);
+    }
     
     return (p.ExitCode, output);
 }

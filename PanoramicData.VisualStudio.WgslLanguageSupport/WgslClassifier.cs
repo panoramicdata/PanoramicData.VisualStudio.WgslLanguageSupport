@@ -100,7 +100,10 @@ internal class WgslClassifier : IClassifier
 
 	private void ClassifyComments(string text, int startPosition, ITextSnapshot snapshot, List<ClassificationSpan> classifications)
 	{
-		if (_commentType == null) return;
+		if (_commentType == null)
+		{
+			return;
+		}
 
 		// Line comments: //
 		var lineCommentPattern = @"//[^\r\n]*";
@@ -121,7 +124,10 @@ internal class WgslClassifier : IClassifier
 
 	private void ClassifyAttributes(string text, int startPosition, ITextSnapshot snapshot, List<ClassificationSpan> classifications)
 	{
-		if (_attributeType == null) return;
+		if (_attributeType == null)
+		{
+			return;
+		}
 
 		// Match @attribute or @attribute(...)
 		var attributePattern = @"@\w+(?:\([^)]*\))?";
@@ -138,7 +144,10 @@ internal class WgslClassifier : IClassifier
 
 	private void ClassifyNumbers(string text, int startPosition, ITextSnapshot snapshot, List<ClassificationSpan> classifications)
 	{
-		if (_numberType == null) return;
+		if (_numberType == null)
+		{
+			return;
+		}
 
 		// Match numbers: integers, floats, hex
 		var numberPattern = @"\b(?:0x[0-9a-fA-F]+[iu]?|(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?[fh]?)\b";
@@ -154,18 +163,25 @@ internal class WgslClassifier : IClassifier
 
 	private void ClassifyFunctions(string text, int startPosition, ITextSnapshot snapshot, List<ClassificationSpan> classifications)
 	{
-		if (_functionType == null) return;
+		if (_functionType == null)
+		{
+			return;
+		}
 
 		// Match function calls: identifier(
 		var functionPattern = @"\b([a-zA-Z_]\w*)\s*\(";
 		foreach (Match match in Regex.Matches(text, functionPattern))
 		{
 			if (IsInsideComment(text, match.Index))
+			{
 				continue;
+			}
 
 			var functionName = match.Groups[1].Value;
 			if (Keywords.Contains(functionName) || Types.Contains(functionName))
+			{
 				continue;
+			}
 
 			var span = new SnapshotSpan(snapshot, startPosition + match.Groups[1].Index, functionName.Length);
 			classifications.Add(new ClassificationSpan(span, _functionType));
@@ -204,7 +220,9 @@ internal class WgslClassifier : IClassifier
 
 		// Check line comment
 		if (lastLineComment > lastNewLine)
+		{
 			return true;
+		}
 
 		// Check block comment
 		var blockCommentStarts = Regex.Matches(beforeText, @"/\*").Count;

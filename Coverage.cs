@@ -88,7 +88,9 @@ async Task GenerateCoverageAsync()
     var coverageFiles = Directory.GetFiles(".", "coverage.cobertura.xml", SearchOption.AllDirectories);
     
     if (coverageFiles.Length == 0)
+    {
         throw new Exception("No coverage file found. Make sure coverlet.msbuild is installed.");
+    }
     
     var coverageFile = coverageFiles[0];
     Console.WriteLine($"   ? Found: {coverageFile}");
@@ -106,7 +108,9 @@ async Task GenerateCoverageAsync()
         $"-verbosity:Warning");
     
     if (result != 0)
+    {
         throw new Exception("Report generation failed. Make sure ReportGenerator is installed.");
+    }
     
     var reportPath = Path.GetFullPath("TestResults/CoverageReport/index.html");
     Console.WriteLine($"   ? Report generated: {reportPath}");
@@ -199,7 +203,9 @@ async Task<int> RunCommandAsync(string fileName, string arguments)
     
     using var process = Process.Start(startInfo);
     if (process == null)
+    {
         throw new Exception($"Failed to start process: {fileName}");
+    }
     
     var outputTask = process.StandardOutput.ReadToEndAsync();
     var errorTask = process.StandardError.ReadToEndAsync();
@@ -210,10 +216,14 @@ async Task<int> RunCommandAsync(string fileName, string arguments)
     var error = await errorTask;
     
     if (!string.IsNullOrWhiteSpace(output))
+    {
         Console.WriteLine(output);
+    }
     
     if (!string.IsNullOrWhiteSpace(error) && process.ExitCode != 0)
+    {
         Console.Error.WriteLine(error);
+    }
     
     return process.ExitCode;
 }
