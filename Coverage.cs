@@ -63,14 +63,14 @@ async Task GenerateCoverageAsync()
     
     // Run tests with coverage
     Console.WriteLine("\n?? Step 2: Running tests with coverage collection...");
-    var result = await RunCommandAsync("dotnet", 
-        "test " +
-        "--configuration Release " +
-        "/p:CollectCoverage=true " +
-        "/p:CoverletOutputFormat=cobertura " +
-        "/p:CoverletOutput=./TestResults/coverage.cobertura.xml " +
-        "/p:Exclude=\"[*.Tests]*\" " +
-        "--logger \"console;verbosity=minimal\"");
+    var result = await RunCommandAsync(new ProcessStartInfo("dotnet"),
+        "test",
+        "--configuration", "Release",
+        "/p:CollectCoverage=true",
+        "/p:CoverletOutputFormat=cobertura",
+        "/p:CoverletOutput=./TestResults/coverage.cobertura.xml",
+        "/p:Exclude=[*.Tests]*",
+        "--logger", "console;verbosity=minimal");
     
     if (result != 0)
     {
@@ -100,12 +100,12 @@ async Task GenerateCoverageAsync()
     
     // Generate HTML report
     Console.WriteLine("\n?? Step 4: Generating HTML report...");
-    result = await RunCommandAsync("dotnet",
-        $"reportgenerator " +
-        $"-reports:\"{coverageFile}\" " +
-        $"-targetdir:./TestResults/CoverageReport " +
-        $"-reporttypes:Html;TextSummary " +
-        $"-verbosity:Warning");
+    result = await RunCommandAsync(new ProcessStartInfo("dotnet"),
+        "reportgenerator",
+        $"-reports:{coverageFile}",
+        "-targetdir:./TestResults/CoverageReport",
+        "-reporttypes:Html;TextSummary",
+        "-verbosity:Warning");
     
     if (result != 0)
     {
@@ -172,15 +172,18 @@ void OpenInBrowser(string path)
     {
         if (OperatingSystem.IsWindows())
         {
-            Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+            var startInfo = new ProcessStartInfo("explorer.exe");
+            startInfo.ArgumentList.Add(path);
+            using var process = new Process { StartInfo = startInfo };
+            process.Start();
         }
         else if (OperatingSystem.IsMacOS())
         {
-            Process.Start("open", path);
+            Process.Start("open", new[] { path });
         }
         else if (OperatingSystem.IsLinux())
         {
-            Process.Start("xdg-open", path);
+            Process.Start("xdg-open", new[] { path });
         }
     }
     catch (Exception ex)
@@ -189,22 +192,22 @@ void OpenInBrowser(string path)
     }
 }
 
-async Task<int> RunCommandAsync(string fileName, string arguments)
+async Task<int> RunCommandAsync(ProcessStartInfo startInfo, params string[] arguments)
 {
-    var startInfo = new ProcessStartInfo
+    foreach (var argument in arguments)
     {
-        FileName = fileName,
-        Arguments = arguments,
-        RedirectStandardOutput = true,
-        RedirectStandardError = true,
-        UseShellExecute = false,
-        CreateNoWindow = true
-    };
-    
-    using var process = Process.Start(startInfo);
-    if (process == null)
+        startInfo.ArgumentList.Add(argument);
+    }
+
+    startInfo.RedirectStandardOutput = true;
+    startInfo.RedirectStandardError = true;
+    startInfo.UseShellExecute = false;
+    startInfo.CreateNoWindow = true;
+
+    using var process = new Process { StartInfo = startInfo };
+    if (!process.Start())
     {
-        throw new Exception($"Failed to start process: {fileName}");
+        throw new InvalidOperationException($"Failed to start process: {startInfo.FileName}");
     }
     
     var outputTask = process.StandardOutput.ReadToEndAsync();

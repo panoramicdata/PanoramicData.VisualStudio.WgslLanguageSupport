@@ -69,11 +69,11 @@ async Task TagAndPushAsync()
 
 void ValidateEnvironment()
 {
-    if (!IsCommandAvailable("git"))
+    if (!IsCommandAvailable(new ProcessStartInfo("git")))
     {
         throw new Exception("Git not found");
     }
-    if (!IsCommandAvailable("nbgv"))
+    if (!IsCommandAvailable(new ProcessStartInfo("nbgv")))
     {
         throw new Exception("nbgv not found. Install: dotnet tool install -g nbgv");
     }
@@ -86,7 +86,7 @@ void ValidateEnvironment()
 
 async Task CheckGitStatusAsync()
 {
-    var result = await RunCommandAsync("git", "status --porcelain", captureOutput: true);
+    var result = await RunCommandAsync(new ProcessStartInfo("git"), true, "status", "--porcelain");
     if (!string.IsNullOrWhiteSpace(result.Output))
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
@@ -112,7 +112,7 @@ async Task CheckGitStatusAsync()
 
 async Task<string> GetNbgvVersionAsync()
 {
-    var result = await RunCommandAsync("nbgv", "get-version -f json", captureOutput: true);
+    var result = await RunCommandAsync(new ProcessStartInfo("nbgv"), true, "get-version", "-f", "json");
     
     // Try to get SemVer2 version first (includes build metadata like 1.0.123)
     var semVer2Match = Regex.Match(result.Output, @"""SemVer2""\s*:\s*""([^""]+)""");
@@ -141,68 +141,81 @@ async Task<string> GetNbgvVersionAsync()
 
 async Task<bool> CheckTagExistsAsync(string version)
 {
-    var result = await RunCommandAsync("git", $"tag -l v{version}", captureOutput: true);
+    var result = await RunCommandAsync(new ProcessStartInfo("git"), true, "tag", "-l", $"v{version}");
     return !string.IsNullOrWhiteSpace(result.Output);
 }
 
 async Task CreateGitTagAsync(string version, bool force, bool dryRun)
 {
-    var command = $"tag {(force ? "-f " : "")}-a v{version} -m \"Release {version}\"";
+    var arguments = force
+        ? new[] { "tag", "-f", "-a", $"v{version}", "-m", $"Release {version}" }
+        : new[] { "tag", "-a", $"v{version}", "-m", $"Release {version}" };
     if (dryRun)
     {
-        Console.WriteLine($"   [DRY RUN] git {command}");
+        Console.WriteLine($"   [DRY RUN] git {FormatForDisplay(arguments)}");
     }
     else
     {
-        await RunCommandAsync("git", command, captureOutput: false);
+        await RunCommandAsync(new ProcessStartInfo("git"), false, arguments);
         Console.WriteLine($"   [OK] Created tag: v{version}");
     }
 }
 
 async Task PushTagAsync(string version, bool force, bool dryRun)
 {
-    var command = $"push {(force ? "--force " : "")}origin v{version}";
+    var arguments = force
+        ? new[] { "push", "--force", "origin", $"v{version}" }
+        : new[] { "push", "origin", $"v{version}" };
     if (dryRun)
     {
-        Console.WriteLine($"   [DRY RUN] git {command}");
+        Console.WriteLine($"   [DRY RUN] git {FormatForDisplay(arguments)}");
     }
     else
     {
-        await RunCommandAsync("git", command, captureOutput: false);
+        await RunCommandAsync(new ProcessStartInfo("git"), false, arguments);
         Console.WriteLine($"   [OK] Pushed tag: v{version}");
     }
 }
 
-bool IsCommandAvailable(string command)
+string FormatForDisplay(string[] arguments)
+{
+    return string.Join(' ', arguments.Select(a => a.Contains(' ') ? $"\"{a}\"" : a));
+}
+
+bool IsCommandAvailable(ProcessStartInfo startInfo)
 {
     try
     {
-        var p = Process.Start(new ProcessStartInfo
-        {
-            FileName = command,
-            Arguments = "--version",
-            RedirectStandardOutput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        });
-        p?.WaitForExit(5000);
-        return p?.ExitCode == 0;
+        startInfo.ArgumentList.Add("--version");
+        startInfo.RedirectStandardOutput = true;
+        startInfo.UseShellExecute = false;
+        startInfo.CreateNoWindow = true;
+        using var p = new Process { StartInfo = startInfo };
+        p.Start();
+        p.WaitForExit(5000);
+        return p.ExitCode == 0;
     }
     catch { return false; }
 }
 
-async Task<(int ExitCode, string Output)> RunCommandAsync(string fileName, string arguments, bool captureOutput)
+async Task<(int ExitCode, string Output)> RunCommandAsync(ProcessStartInfo startInfo, bool captureOutput, params string[] arguments)
 {
-    var p = Process.Start(new ProcessStartInfo
+    foreach (var argument in arguments)
     {
-        FileName = fileName,
-        Arguments = arguments,
-        RedirectStandardOutput = true,
-        RedirectStandardError = true,
-        UseShellExecute = false,
-        CreateNoWindow = true
-    }) ?? throw new Exception($"Failed to start: {fileName}");
-    
+        startInfo.ArgumentList.Add(argument);
+    }
+
+    startInfo.RedirectStandardOutput = true;
+    startInfo.RedirectStandardError = true;
+    startInfo.UseShellExecute = false;
+    startInfo.CreateNoWindow = true;
+
+    using var p = new Process { StartInfo = startInfo };
+    if (!p.Start())
+    {
+        throw new InvalidOperationException($"Failed to start: {startInfo.FileName}");
+    }
+
     var output = await p.StandardOutput.ReadToEndAsync();
     var error = await p.StandardError.ReadToEndAsync();
     await p.WaitForExitAsync();
