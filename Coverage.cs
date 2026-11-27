@@ -207,7 +207,7 @@ async Task<int> RunCommandAsync(ProcessStartInfo startInfo, params string[] argu
     using var process = new Process { StartInfo = startInfo };
     if (!process.Start())
     {
-        throw new Exception($"Failed to start process: {startInfo.FileName}");
+        throw new InvalidOperationException($"Failed to start process: {startInfo.FileName}");
     }
     
     var outputTask = process.StandardOutput.ReadToEndAsync();
