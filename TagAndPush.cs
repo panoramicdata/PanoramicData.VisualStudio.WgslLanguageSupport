@@ -152,7 +152,7 @@ async Task CreateGitTagAsync(string version, bool force, bool dryRun)
         : new[] { "tag", "-a", $"v{version}", "-m", $"Release {version}" };
     if (dryRun)
     {
-        Console.WriteLine($"   [DRY RUN] git {string.Join(' ', arguments)}");
+        Console.WriteLine($"   [DRY RUN] git {FormatForDisplay(arguments)}");
     }
     else
     {
@@ -168,13 +168,18 @@ async Task PushTagAsync(string version, bool force, bool dryRun)
         : new[] { "push", "origin", $"v{version}" };
     if (dryRun)
     {
-        Console.WriteLine($"   [DRY RUN] git {string.Join(' ', arguments)}");
+        Console.WriteLine($"   [DRY RUN] git {FormatForDisplay(arguments)}");
     }
     else
     {
         await RunCommandAsync(new ProcessStartInfo("git"), false, arguments);
         Console.WriteLine($"   [OK] Pushed tag: v{version}");
     }
+}
+
+string FormatForDisplay(string[] arguments)
+{
+    return string.Join(' ', arguments.Select(a => a.Contains(' ') ? $"\"{a}\"" : a));
 }
 
 bool IsCommandAvailable(ProcessStartInfo startInfo)

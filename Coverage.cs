@@ -172,19 +172,18 @@ void OpenInBrowser(string path)
     {
         if (OperatingSystem.IsWindows())
         {
-            // A literal target keeps the shell-executed file fixed to the generated report.
-            var startInfo = new ProcessStartInfo("TestResults/CoverageReport/index.html");
-            startInfo.UseShellExecute = true;
+            var startInfo = new ProcessStartInfo("explorer.exe");
+            startInfo.ArgumentList.Add(path);
             using var process = new Process { StartInfo = startInfo };
             process.Start();
         }
         else if (OperatingSystem.IsMacOS())
         {
-            Process.Start("open", path);
+            Process.Start("open", new[] { path });
         }
         else if (OperatingSystem.IsLinux())
         {
-            Process.Start("xdg-open", path);
+            Process.Start("xdg-open", new[] { path });
         }
     }
     catch (Exception ex)
