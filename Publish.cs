@@ -183,7 +183,7 @@ async Task<string> GetVersionAsync(string? providedVersion)
     }
     
     // Check if nbgv is available
-    if (!IsCommandAvailable("nbgv"))
+    if (!IsCommandAvailable(new ProcessStartInfo("nbgv")))
     {
         Console.WriteLine("   [!] NBGV not found, reading from manifest...");
         // Fallback: Read version from manifest
@@ -197,7 +197,7 @@ async Task<string> GetVersionAsync(string? providedVersion)
     }
     
     // Get version from NBGV (same logic as TagAndPush.cs)
-    var result = await RunCommandAsync("nbgv", "get-version -f json", captureOutput: true);
+    var result = await RunCommandCaptureAsync(new ProcessStartInfo("nbgv"), "get-version", "-f", "json");
     
     // Try to get SemVer2 version first (includes build metadata like 1.0.123)
     var semVer2Match = System.Text.RegularExpressions.Regex.Match(result.Output, @"""SemVer2""\s*:\s*""([^""]+)""");
@@ -238,7 +238,7 @@ async Task UpdateManifestVersionAsync(string newVersion)
 
 async Task RunTestsAsync()
 {
-    var result = await RunCommandAsync("dotnet", "test --configuration Release --logger \"console;verbosity=minimal\"");
+    var result = await RunCommandAsync(new ProcessStartInfo("dotnet"), "test", "--configuration", "Release", "--logger", "console;verbosity=minimal");
     if (result != 0)
     {
         throw new Exception("Unit tests failed. Fix tests before publishing.");
@@ -250,9 +250,9 @@ async Task RunTestsAsync()
 async Task BuildExtensionAsync()
 {
     var msbuild = FindMSBuild();
-    var result = await RunCommandAsync(
+    var result = await RunInstalledToolAsync(
         msbuild,
-        $"\"{SolutionFile}\" /t:Rebuild /p:Configuration=Release /p:Platform=\"Any CPU\" /v:minimal /nologo");
+        SolutionFile, "/t:Rebuild", "/p:Configuration=Release", "/p:Platform=Any CPU", "/v:minimal", "/nologo");
     
     if (result != 0)
         throw new Exception("Build failed");
@@ -284,14 +284,14 @@ async Task GenerateCoverageReportAsync()
     {
         // Run tests with coverage
         Console.WriteLine("   Running tests with coverage collection...");
-        await RunCommandAsync("dotnet", "test --configuration Release /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/coverage.cobertura.xml");
+        await RunCommandAsync(new ProcessStartInfo("dotnet"), "test", "--configuration", "Release", "/p:CollectCoverage=true", "/p:CoverletOutputFormat=cobertura", "/p:CoverletOutput=./TestResults/coverage.cobertura.xml");
         
         // Generate HTML report
         var coverageFile = Directory.GetFiles(".", "coverage.cobertura.xml", SearchOption.AllDirectories).FirstOrDefault();
         if (coverageFile != null)
         {
             Console.WriteLine("   Generating coverage report...");
-            await RunCommandAsync("dotnet", $"reportgenerator -reports:\"{coverageFile}\" -targetdir:./TestResults/CoverageReport -reporttypes:Html");
+            await RunCommandAsync(new ProcessStartInfo("dotnet"), "reportgenerator", $"-reports:{coverageFile}", "-targetdir:./TestResults/CoverageReport", "-reporttypes:Html");
             Console.WriteLine($"   ? Coverage report: ./TestResults/CoverageReport/index.html");
         }
         else
@@ -338,9 +338,9 @@ async Task UploadToMarketplaceAsync(string vsixPath, string version)
 async Task UploadWithVsixPublisherAsync(string vsixPublisher, string vsixPath, string pat)
 {
     var manifestPath = CreatePublishManifest(vsixPath);
-    var result = await RunCommandAsync(
+    var result = await RunInstalledToolAsync(
         vsixPublisher,
-        $"publish -payload \"{vsixPath}\" -publishManifest \"{manifestPath}\" -personalAccessToken \"{pat}\"");
+        "publish", "-payload", vsixPath, "-publishManifest", manifestPath, "-personalAccessToken", pat);
     
     File.Delete(manifestPath);
     
@@ -429,23 +429,20 @@ string? FindVsixPublisher()
     return null;
 }
 
-bool IsCommandAvailable(string command)
+bool IsCommandAvailable(ProcessStartInfo startInfo)
 {
     try
     {
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = command,
-            Arguments = "--version",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        
-        using var process = Process.Start(startInfo);
-        process?.WaitForExit(5000);
-        return process?.ExitCode == 0;
+        startInfo.ArgumentList.Add("--version");
+        startInfo.RedirectStandardOutput = true;
+        startInfo.RedirectStandardError = true;
+        startInfo.UseShellExecute = false;
+        startInfo.CreateNoWindow = true;
+
+        using var process = new Process { StartInfo = startInfo };
+        process.Start();
+        process.WaitForExit(5000);
+        return process.ExitCode == 0;
     }
     catch
     {
@@ -453,29 +450,42 @@ bool IsCommandAvailable(string command)
     }
 }
 
-async Task<int> RunCommandAsync(string fileName, string arguments)
+// For a tool found at a fixed install path: arguments are passed as a list, never as one command string.
+async Task<int> RunInstalledToolAsync(string toolPath, params string[] arguments)
 {
-    return (await RunCommandAsync(fileName, arguments, captureOutput: false)).ExitCode;
+    using var process = Process.Start(toolPath, arguments);
+    await process.WaitForExitAsync();
+    return process.ExitCode;
 }
 
-async Task<(int ExitCode, string Output)> RunCommandAsync(string fileName, string arguments, bool captureOutput)
+async Task<int> RunCommandAsync(ProcessStartInfo startInfo, params string[] arguments)
 {
-    var startInfo = new ProcessStartInfo
+    return (await RunProcessAsync(startInfo, false, arguments)).ExitCode;
+}
+
+async Task<(int ExitCode, string Output)> RunCommandCaptureAsync(ProcessStartInfo startInfo, params string[] arguments)
+{
+    return await RunProcessAsync(startInfo, true, arguments);
+}
+
+async Task<(int ExitCode, string Output)> RunProcessAsync(ProcessStartInfo startInfo, bool captureOutput, string[] arguments)
+{
+    foreach (var argument in arguments)
     {
-        FileName = fileName,
-        Arguments = arguments,
-        RedirectStandardOutput = true,
-        RedirectStandardError = true,
-        UseShellExecute = false,
-        CreateNoWindow = true
-    };
-    
-    using var process = Process.Start(startInfo);
-    if (process == null)
-    {
-        throw new Exception($"Failed to start process: {fileName}");
+        startInfo.ArgumentList.Add(argument);
     }
-    
+
+    startInfo.RedirectStandardOutput = true;
+    startInfo.RedirectStandardError = true;
+    startInfo.UseShellExecute = false;
+    startInfo.CreateNoWindow = true;
+
+    using var process = new Process { StartInfo = startInfo };
+    if (!process.Start())
+    {
+        throw new Exception($"Failed to start process: {startInfo.FileName}");
+    }
+
     var outputTask = process.StandardOutput.ReadToEndAsync();
     var errorTask = process.StandardError.ReadToEndAsync();
     

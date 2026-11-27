@@ -54,16 +54,16 @@ if (identity != null)
         // Also show NBGV version for comparison
         try
         {
-            var nbgvVersion = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "nbgv",
-                Arguments = "get-version -v Version",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            });
-            
-            if (nbgvVersion != null)
+            var nbgvStartInfo = new System.Diagnostics.ProcessStartInfo("nbgv");
+            nbgvStartInfo.ArgumentList.Add("get-version");
+            nbgvStartInfo.ArgumentList.Add("-v");
+            nbgvStartInfo.ArgumentList.Add("Version");
+            nbgvStartInfo.RedirectStandardOutput = true;
+            nbgvStartInfo.UseShellExecute = false;
+            nbgvStartInfo.CreateNoWindow = true;
+
+            using var nbgvVersion = new System.Diagnostics.Process { StartInfo = nbgvStartInfo };
+            if (nbgvVersion.Start())
             {
                 var nbgvOutput = nbgvVersion.StandardOutput.ReadToEnd().Trim();
                 nbgvVersion.WaitForExit();
